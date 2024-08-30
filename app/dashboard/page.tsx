@@ -1,12 +1,10 @@
-import Dashboard from '../../components/Dashboard'
+import DataUpload from '@/components/DataUpload'
 
-export default function DashboardPage({ searchParams }: { searchParams: { fileId: string } }) {
-  const { fileId } = searchParams
-
+export default function Home() {
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-      {fileId ? <Dashboard fileId={fileId} /> : <p>No file ID provided</p>}
-    </div>
+    <main className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Locked In Analytics</h1>
+      <DataUpload />
+    </main>
   )
 }

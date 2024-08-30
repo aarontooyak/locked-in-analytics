@@ -1,20 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { User } from '@supabase/supabase-js'
+// We'll implement this later
+// import { supabase } from '@/lib/supabase'
 
-// This is a placeholder. We'll implement the real authentication later.
 export const useAuth = () => {
-  const [user, setUser] = useState<{ email: string } | null>(null)
+  const [user, setUser] = useState<User | null>(null)
 
-  useEffect(() => {
-    // Simulating an authentication check
-    setTimeout(() => {
-      setUser({ email: 'user@example.com' })
-    }, 1000)
-  }, [])
-
+  // Placeholder for signOut function
   const signOut = () => {
-    setUser(null)
+    // We'll implement this later
+    console.log('Sign out')
   }
 
   return { user, signOut }
