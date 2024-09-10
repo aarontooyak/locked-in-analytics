@@ -3,7 +3,6 @@
 import React, { useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
-import { uploadFile } from '@/lib/dataPipeline'
 import Button from './ui/Button'
 
 const DataUpload: React.FC = () => {
@@ -15,8 +14,26 @@ const DataUpload: React.FC = () => {
     setUploading(true)
     try {
       const file = acceptedFiles[0]
-      const fileId = await uploadFile(file, (progress) => setUploadProgress(progress))
-      router.push(`/dashboard?fileId=${fileId}`)
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Simulate progress for now
+        for (let i = 0; i <= 100; i += 10) {
+          setUploadProgress(i)
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
+        router.push(`/dashboard?fileId=${result.fileName}`)
+      } else {
+        console.error('Upload failed:', result.message)
+      }
     } catch (error) {
       console.error('Upload failed:', error)
     } finally {
