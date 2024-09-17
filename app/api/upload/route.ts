@@ -8,18 +8,24 @@ const supabase = createClient(
 );
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
-  const file = formData.get('file') as File;
-
-  if (!file) {
-    return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 });
-  }
-
   try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+
+    if (!file) {
+      return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 });
+    }
+
+    // Convert File to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBuffer = new Uint8Array(arrayBuffer);
+
     // Upload file to Supabase Storage
     const { data, error } = await supabase.storage
-      .from('your-bucket-name')
-      .upload(`files/${file.name}`, file);
+      .from('locked-in-files') // Replace with your actual bucket name
+      .upload(`files/${file.name}`, fileBuffer, {
+        contentType: file.type
+      });
 
     if (error) throw error;
 
@@ -39,12 +45,16 @@ export async function POST(request: Request) {
       success: true,
       message: 'File uploaded and analyzed successfully',
       fileName: file.name,
-      filePath: data.path,
+      filePath: data?.path,
       insights: insights,
       data: mockData  // In a real scenario, this would be the processed file data
     });
   } catch (error) {
     console.error('Operation failed:', error);
-    return NextResponse.json({ success: false, message: 'Operation failed' }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Operation failed', 
+      error: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }
