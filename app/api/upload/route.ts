@@ -12,8 +12,9 @@ export async function POST(request: Request) {
     console.log('Received upload request');
     
     const formData = await request.formData();
-    const file = formData.get('file') as File;
+    console.log('FormData received');
 
+    const file = formData.get('file') as File;
     if (!file) {
       console.log('No file uploaded');
       return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 });
@@ -24,10 +25,10 @@ export async function POST(request: Request) {
     // Convert File to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = new Uint8Array(arrayBuffer);
-
-    console.log('File converted to buffer');
+    console.log('File converted to buffer, length:', fileBuffer.length);
 
     // Upload file to Supabase Storage
+    console.log('Attempting to upload to Supabase');
     const { data, error } = await supabase.storage
       .from('locked-in-files')
       .upload(`files/${file.name}`, fileBuffer, {
@@ -36,7 +37,11 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('Supabase upload error:', error);
-      throw error;
+      return NextResponse.json({ 
+        success: false, 
+        message: 'File upload failed', 
+        error: error.message
+      }, { status: 500 });
     }
 
     console.log('File uploaded to Supabase:', data);
@@ -51,10 +56,19 @@ export async function POST(request: Request) {
     ];
 
     console.log('Analyzing data with Claude');
-    // Analyze the data using Claude
-    const insights = await analyzeDataWithClaude(mockData);
-
-    console.log('Analysis complete');
+    let insights;
+    try {
+      // Analyze the data using Claude
+      insights = await analyzeDataWithClaude(mockData);
+      console.log('Analysis complete');
+    } catch (analysisError) {
+      console.error('Error during Claude analysis:', analysisError);
+      return NextResponse.json({
+        success: false,
+        message: 'Data analysis failed',
+        error: analysisError instanceof Error ? analysisError.message : String(analysisError)
+      }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
@@ -64,6 +78,7 @@ export async function POST(request: Request) {
       insights: insights,
       data: mockData  // In a real scenario, this would be the processed file data
     });
+
   } catch (error) {
     console.error('Operation failed:', error);
     return NextResponse.json({ 
